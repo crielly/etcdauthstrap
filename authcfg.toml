@@ -1,0 +1,10 @@
+# This is a TOML document.
+
+title = "ETCD Auth Configuration"
+
+[TLS]
+certfile = "/etc/ssl/kube/client-cert.pem"
+keyfile = "/etc/ssl/kube/client-key.pem"
+cafile = "/etc/ssl/kube/root-ca-cert.pem"
+
+users = ["root", "kube-apiserver", "helperlambda"]
