@@ -1,10 +1,16 @@
-# This is a TOML document.
+[logging]
+loglevel = "DEBUG"
+logtype = "stdout"
 
-title = "ETCD Auth Configuration"
+[connection]
+endpoint = "localhost"
+scheme = "https"
+port = 2379
 
-[TLS]
+[tls]
 certfile = "/etc/ssl/kube/client-cert.pem"
 keyfile = "/etc/ssl/kube/client-key.pem"
 cafile = "/etc/ssl/kube/root-ca-cert.pem"
 
+[users]
 users = ["root", "kube-apiserver", "helperlambda"]

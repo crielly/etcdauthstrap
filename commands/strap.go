@@ -1,21 +1,17 @@
 package commands
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"time"
 
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-func init() {
-	rootCmd.AddCommand(strapCmd)
-}
-
-var strapCmd = &cobra.Command{
+var strapCommand = &cobra.Command{
 	Use:   "strap",
 	Short: "Bootstrap etcd auth using the provided config",
 	Long:  "Configure Users and Roles via both the etcd v2 and v3 APIs and enable Auth",
@@ -28,9 +24,9 @@ func strap() {
 	fmt.Println("Running strap command, adding users and enabling auth")
 
 	tlsInfo := transport.TLSInfo{
-		CertFile:      "/home/crielly/etcdapi/client-cert.pem",
-		KeyFile:       "/home/crielly/etcdapi/client-key.pem",
-		TrustedCAFile: "/home/crielly/etcdapi/root-ca-cert.pem",
+		CertFile:      viper.GetString("tls.certfile"),
+		KeyFile:       viper.GetString("tls.keyfile"),
+		TrustedCAFile: viper.GetString("tls.cafile"),
 	}
 
 	tlsConfig, err := tlsInfo.ClientConfig()
@@ -38,8 +34,17 @@ func strap() {
 		log.Fatal(err)
 	}
 
+	endpoint := fmt.Sprintf(
+		"%s://%s:%d",
+		viper.GetString("connection.scheme"),
+		viper.GetString("connection.endpoint"),
+		viper.GetInt("connection.port"),
+	)
+
+	log.Infof("Connection Endpoint: %s", endpoint)
+
 	cli, err := etcd.New(etcd.Config{
-		Endpoints:   []string{"https://localhost:2379"},
+		Endpoints:   []string{endpoint},
 		DialTimeout: 10 * time.Second,
 		TLS:         tlsConfig,
 	})
@@ -50,13 +55,13 @@ func strap() {
 
 	defer cli.Close()
 
-	_, err = cli.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
+	for _, user := range viper.GetStringSlice("users.users") {
+		log.Infof("User: %s", user)
+	}
+
+	// _, err = cli.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	userlist, err := cli.Auth.UserList(context.TODO())
-
-	fmt.Println(userlist)
 }

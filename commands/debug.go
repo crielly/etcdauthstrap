@@ -12,7 +12,7 @@ var debugCommand = &cobra.Command{
 	Long:  "Log all configuration keys and values",
 	Run: func(cmd *cobra.Command, args []string) {
 		for k, v := range viper.AllSettings() {
-			log.Infof("%s: %s", k, v)
+			log.Infof("%s: %v", k, v)
 		}
 	},
 }
