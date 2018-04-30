@@ -1,0 +1,16 @@
+[logging]
+loglevel = "DEBUG"
+logtype = "stdout"
+
+[connection]
+endpoint = "localhost"
+scheme = "https"
+port = 2379
+
+[tls]
+certfile = "/etc/ssl/kube/client-cert.pem"
+keyfile = "/etc/ssl/kube/client-key.pem"
+cafile = "/etc/ssl/kube/root-ca-cert.pem"
+
+[users]
+users = ["root", "kube-apiserver", "helperlambda"]
