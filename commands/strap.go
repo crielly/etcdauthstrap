@@ -76,7 +76,7 @@ func strap() {
 			log.Fatal(err)
 		}
 
-		log.Infof("Content of Parameter: %s", resp.Parameter)
+		log.Infof("Content of Parameter: %s", resp.Parameter.Value)
 
 		//_, err = api.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
 	}
