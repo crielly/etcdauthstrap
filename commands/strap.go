@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -76,9 +77,7 @@ func strap() {
 			log.Fatal(err)
 		}
 
-		log.Infof("Content of Parameter: %v", resp.Parameter)
-
-		//_, err = api.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
+		_, err = api.Auth.UserAdd(context.TODO(), user, resp.Parameter.Value)
 	}
 
 	if err != nil {
