@@ -58,6 +58,10 @@ func strap() {
 
 	defer api.Close()
 
+	if _, err = api.RoleAdd(context.TODO(), "root"); err != nil {
+		log.Fatal(err)
+	}
+
 	ssmclient := getSSMClient()
 
 	for _, user := range viper.GetStringSlice("users.users") {
@@ -79,7 +83,17 @@ func strap() {
 
 		log.Infof("Password for user %s: %s", user, *resp.Parameter.Value)
 
-		_, err = api.Auth.UserAdd(context.TODO(), user, *resp.Parameter.Value)
+		if _, err = api.Auth.UserAdd(context.TODO(), user, *resp.Parameter.Value); err != nil {
+			log.Fatal(err)
+		}
+
+		if _, err = api.UserGrantRole(context.TODO(), user, "root"); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if _, err = api.AuthEnable(context.TODO()); err != nil {
+		log.Fatal(err)
 	}
 
 	if err != nil {
