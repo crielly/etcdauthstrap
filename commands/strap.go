@@ -20,7 +20,7 @@ var strapCommand = &cobra.Command{
 	Short: "Bootstrap etcd auth using the provided config",
 	Long:  "Configure Users and Roles via both the etcd v2 and v3 APIs and enable Auth",
 	Run: func(cmd *cobra.Command, args []string) {
-		getSSMClient()
+		strap()
 	},
 }
 
