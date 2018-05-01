@@ -63,6 +63,8 @@ func strap() {
 
 		parampath := fmt.Sprintf("%s/%s/password", viper.Get("passpathprefix"), user)
 
+		log.Infof("SSM Parameter Path for %s password: %s", user, parampath)
+
 		getParamInput := &ssm.GetParameterInput{
 			Name:           &parampath,
 			WithDecryption: aws.Bool(true),

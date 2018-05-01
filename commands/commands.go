@@ -64,7 +64,7 @@ func init() {
 	viper.BindPFlag("logging.logfile", RootCmd.PersistentFlags().Lookup("logfile"))
 
 	// ENVIRONMENT
-	RootCmd.PersistentFlags().String("passpathprefix", "", "SSM Parameter Store Path prefix containing root user passwords")
+	RootCmd.PersistentFlags().String("passpathprefix", "/etcd", "SSM Parameter Store Path prefix containing root user passwords")
 	viper.BindPFlag("environment.passpathprefix", RootCmd.PersistentFlags().Lookup("passpathprefix"))
 
 	// CONNECTION
