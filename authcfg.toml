@@ -2,6 +2,9 @@
 loglevel = "DEBUG"
 logtype = "stdout"
 
+[environment]
+passpathprefix = "/TCK8S/dev/etcd/rootusers"
+
 [connection]
 endpoint = "localhost"
 scheme = "https"

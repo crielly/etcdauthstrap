@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	log "github.com/sirupsen/logrus"
@@ -56,10 +57,27 @@ func strap() {
 
 	defer api.Close()
 
-	// for _, user := range viper.GetStringSlice("users.users") {
-	// 	log.Infof("User: %s", user)
-	// 	_, err = api.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
-	// }
+	ssmclient := getSSMClient()
+
+	for _, user := range viper.GetStringSlice("users.users") {
+
+		parampath := fmt.Sprintf("%s/%s", viper.Get("passpathprefix"), user)
+
+		getParamInput := &ssm.GetParameterInput{
+			Name:           &parampath,
+			WithDecryption: aws.Bool(true),
+		}
+
+		resp, err := ssmclient.GetParameter(getParamInput)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Infof("Content of Parameter: %s", resp.Parameter)
+
+		//_, err = api.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
+	}
 
 	if err != nil {
 		log.Fatal(err)
@@ -68,6 +86,7 @@ func strap() {
 
 func getRegion() (region string) {
 	sess := session.Must(session.NewSession())
+
 	client := ec2metadata.New(sess, aws.NewConfig())
 
 	region, err := client.Region()
@@ -75,10 +94,16 @@ func getRegion() (region string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return region
 }
 
-func getSSMClient() {
+func getSSMClient() *ssm.SSM {
 	region := getRegion()
-	log.Infof("AWS Region: %s", region)
+
+	sess := session.Must(session.NewSession())
+
+	client := ssm.New(sess, aws.NewConfig().WithRegion(region))
+
+	return client
 }
