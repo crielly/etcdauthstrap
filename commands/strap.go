@@ -77,7 +77,9 @@ func strap() {
 			log.Fatal(err)
 		}
 
-		_, err = api.Auth.UserAdd(context.TODO(), user, resp.Parameter.Value)
+		log.Infof("Password for user %s: %s", user, *resp.Parameter.Value)
+
+		_, err = api.Auth.UserAdd(context.TODO(), user, *resp.Parameter.Value)
 	}
 
 	if err != nil {
