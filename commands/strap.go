@@ -61,7 +61,7 @@ func strap() {
 
 	for _, user := range viper.GetStringSlice("users.users") {
 
-		parampath := fmt.Sprintf("%s/%s/password", viper.GetString("passpathprefix"), user)
+		parampath := fmt.Sprintf("%s/%s/password", viper.GetString("environment.passpathprefix"), user)
 
 		log.Infof("SSM Parameter Path for %s password: %s", user, parampath)
 
