@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -64,8 +65,14 @@ func strap() {
 
 	log.Info("Attempting to add root role via v3 API")
 
-	if _, err = api.RoleAdd(context.TODO(), "root"); err != nil {
-		log.Fatal(err)
+	if resp, err := api.RoleAdd(context.TODO(), "root"); err != nil {
+		if strings.HasSuffix(err.Error(), "role name already exists") {
+			log.Info("Tried to add root role but it already exists, so error returned. Ignoring")
+		} else {
+			log.Fatal(err)
+		}
+	} else {
+		log.Infof("Added root role, response: ", resp)
 	}
 
 	ssmclient := getSSMClient()
@@ -88,7 +95,13 @@ func strap() {
 		}
 
 		if _, err = api.Auth.UserAdd(context.TODO(), user, *resp.Parameter.Value); err != nil {
-			log.Fatal(err)
+			if strings.HasSuffix(err.Error(), "user name already exists") {
+				log.Info("Tried to add user %s but it already exists, so returned error. Ignoring", user)
+			} else {
+				log.Fatal(err)
+			}
+		} else {
+			log.Infof("Added user %s", user)
 		}
 
 		if _, err = api.UserGrantRole(context.TODO(), user, "root"); err != nil {
@@ -116,6 +129,8 @@ func getRegion() (region string) {
 		log.Fatal(err)
 	}
 
+	log.Infof("Fetched AWS region from ec2 metadata API - using %s", region)
+
 	return region
 }
 
@@ -125,6 +140,8 @@ func getSSMClient() *ssm.SSM {
 	sess := session.Must(session.NewSession())
 
 	client := ssm.New(sess, aws.NewConfig().WithRegion(region))
+
+	log.Infof("Created session for AWS SSM: ", client)
 
 	return client
 }
