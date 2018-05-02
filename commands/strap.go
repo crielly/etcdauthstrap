@@ -46,9 +46,11 @@ func strap() {
 		viper.GetInt("connection.port"),
 	)
 
+	log.Infof("Attempting to establish connection to %s", endpoint)
+
 	api, err := etcd.New(etcd.Config{
 		Endpoints:   []string{endpoint},
-		DialTimeout: 10 * time.Second,
+		DialTimeout: 30 * time.Second,
 		TLS:         tlsConfig,
 	})
 
@@ -56,7 +58,11 @@ func strap() {
 		log.Fatal(err)
 	}
 
+	log.Infof("Established connection to %s, returned object %v", endpoint, api)
+
 	defer api.Close()
+
+	log.Info("Attempting to add root role via v3 API")
 
 	if _, err = api.RoleAdd(context.TODO(), "root"); err != nil {
 		log.Fatal(err)
