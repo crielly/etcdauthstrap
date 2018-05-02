@@ -96,7 +96,7 @@ func strap() {
 
 		if _, err = api.Auth.UserAdd(context.TODO(), user, *resp.Parameter.Value); err != nil {
 			if strings.HasSuffix(err.Error(), "user name already exists") {
-				log.Info("Tried to add user %s but it already exists, so returned error. Ignoring", user)
+				log.Infof("Tried to add user %s but it already exists, so returned error. Ignoring", user)
 			} else {
 				log.Fatal(err)
 			}
@@ -109,8 +109,10 @@ func strap() {
 		}
 	}
 
-	if _, err = api.AuthEnable(context.TODO()); err != nil {
+	if resp, err := api.AuthEnable(context.TODO()); err != nil {
 		log.Fatal(err)
+	} else {
+		log.Infof("Enabled Authentication against V3 API, response: ", resp)
 	}
 
 	if err != nil {
@@ -141,7 +143,7 @@ func getSSMClient() *ssm.SSM {
 
 	client := ssm.New(sess, aws.NewConfig().WithRegion(region))
 
-	log.Infof("Created session for AWS SSM: ", client)
+	log.Infof("Created session for AWS SSM: ", *client)
 
 	return client
 }
