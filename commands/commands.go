@@ -63,6 +63,10 @@ func init() {
 	viper.BindPFlag("logging.logtype", RootCmd.PersistentFlags().Lookup("logtype"))
 	viper.BindPFlag("logging.logfile", RootCmd.PersistentFlags().Lookup("logfile"))
 
+	// ENVIRONMENT
+	RootCmd.PersistentFlags().String("passpathprefix", "/etcd", "SSM Parameter Store Path prefix containing root user passwords")
+	viper.BindPFlag("environment.passpathprefix", RootCmd.PersistentFlags().Lookup("passpathprefix"))
+
 	// CONNECTION
 	RootCmd.PersistentFlags().StringP("endpoint", "e", "localhost", "etcd API endpoint")
 	RootCmd.PersistentFlags().IntP("port", "p", 2379, "etcd API port")

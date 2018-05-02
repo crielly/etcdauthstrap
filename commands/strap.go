@@ -1,9 +1,15 @@
 package commands
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	log "github.com/sirupsen/logrus"
@@ -41,11 +47,11 @@ func strap() {
 		viper.GetInt("connection.port"),
 	)
 
-	log.Infof("Connection Endpoint: %s", endpoint)
+	log.Infof("Attempting to establish connection to %s", endpoint)
 
-	cli, err := etcd.New(etcd.Config{
+	api, err := etcd.New(etcd.Config{
 		Endpoints:   []string{endpoint},
-		DialTimeout: 10 * time.Second,
+		DialTimeout: 30 * time.Second,
 		TLS:         tlsConfig,
 	})
 
@@ -53,15 +59,91 @@ func strap() {
 		log.Fatal(err)
 	}
 
-	defer cli.Close()
+	log.Infof("Established connection to %s, returned object %v", endpoint, api)
 
-	for _, user := range viper.GetStringSlice("users.users") {
-		log.Infof("User: %s", user)
+	defer api.Close()
+
+	log.Info("Attempting to add root role via v3 API")
+
+	if resp, err := api.RoleAdd(context.TODO(), "root"); err != nil {
+		if strings.HasSuffix(err.Error(), "role name already exists") {
+			log.Info("Tried to add root role but it already exists, so error returned. Ignoring")
+		} else {
+			log.Fatal(err)
+		}
+	} else {
+		log.Infof("Added root role, response: ", resp)
 	}
 
-	// _, err = cli.Auth.UserAdd(context.TODO(), "kube-apiserver", "Shyrriw00k")
+	ssmclient := getSSMClient()
+
+	for _, user := range viper.GetStringSlice("users.users") {
+
+		parampath := fmt.Sprintf("%s/%s/password", viper.GetString("environment.passpathprefix"), user)
+
+		log.Infof("SSM Parameter Path for %s password: %s", user, parampath)
+
+		getParamInput := &ssm.GetParameterInput{
+			Name:           &parampath,
+			WithDecryption: aws.Bool(true),
+		}
+
+		resp, err := ssmclient.GetParameter(getParamInput)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if _, err = api.Auth.UserAdd(context.TODO(), user, *resp.Parameter.Value); err != nil {
+			if strings.HasSuffix(err.Error(), "user name already exists") {
+				log.Infof("Tried to add user %s but it already exists, so returned error. Ignoring", user)
+			} else {
+				log.Fatal(err)
+			}
+		} else {
+			log.Infof("Added user %s", user)
+		}
+
+		if _, err = api.UserGrantRole(context.TODO(), user, "root"); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if resp, err := api.AuthEnable(context.TODO()); err != nil {
+		log.Fatal(err)
+	} else {
+		log.Infof("Enabled Authentication against V3 API, response: ", resp)
+	}
 
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getRegion() (region string) {
+	sess := session.Must(session.NewSession())
+
+	client := ec2metadata.New(sess, aws.NewConfig())
+
+	region, err := client.Region()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("Fetched AWS region from ec2 metadata API - using %s", region)
+
+	return region
+}
+
+func getSSMClient() *ssm.SSM {
+	region := getRegion()
+
+	sess := session.Must(session.NewSession())
+
+	client := ssm.New(sess, aws.NewConfig().WithRegion(region))
+
+	log.Infof("Created session for AWS SSM: ", *client)
+
+	return client
 }

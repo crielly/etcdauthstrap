@@ -1,0 +1,33 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/crielly/etcdauthstrap
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
+    steps:
+      - checkout
+
+      - run:
+          name: get dependencies for running tests
+          command: |
+            mkdir -p $TEST_RESULTS
+            go get github.com/jstemmer/go-junit-report
+            git branch -u origin ${CIRCLE_BRANCH}
+            go get -u
+
+      - run:
+          name: Run Unit Tests
+          command: |
+            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
+            make test | tee ${TEST_RESULTS}/go-test.out
+          
+      - run:
+          name: Build etcdauthstrap binary and publish it to github as a release
+          command: |
+            go get github.com/mitchellh/gox
+            go get github.com/tcnksm/ghr
+            make build
+            make publish

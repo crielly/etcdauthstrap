@@ -2,6 +2,9 @@
 loglevel = "DEBUG"
 logtype = "stdout"
 
+[environment]
+passpathprefix = "/TCK8S/dev/etcd/"
+
 [connection]
 endpoint = "localhost"
 scheme = "https"

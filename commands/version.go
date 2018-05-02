@@ -11,6 +11,6 @@ var versionCommand = &cobra.Command{
 	Short: "Print the version number of etcdauthstrap",
 	Long:  "Print the version number of etcdauthstrap!",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("etcdauthstrap v0.1")
+		fmt.Printf("Version: 0.0.2\n")
 	},
 }
