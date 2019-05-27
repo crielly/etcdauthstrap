@@ -72,7 +72,7 @@ func strap() {
 			log.Fatal(err)
 		}
 	} else {
-		log.Infof("Added root role, response: ", resp)
+		log.Infof("Added root role, response: %s", resp)
 	}
 
 	ssmclient := getSSMClient()
@@ -112,7 +112,7 @@ func strap() {
 	if resp, err := api.AuthEnable(context.TODO()); err != nil {
 		log.Fatal(err)
 	} else {
-		log.Infof("Enabled Authentication against V3 API, response: ", resp)
+		log.Infof("Enabled Authentication against V3 API, response: %s", resp)
 	}
 
 	if err != nil {
@@ -143,7 +143,7 @@ func getSSMClient() *ssm.SSM {
 
 	client := ssm.New(sess, aws.NewConfig().WithRegion(region))
 
-	log.Infof("Created session for AWS SSM: ", *client)
+	log.Infof("Created session for AWS SSM: %v", *client)
 
 	return client
 }
